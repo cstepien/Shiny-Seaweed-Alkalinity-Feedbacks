@@ -1,28 +1,44 @@
-# add Bicarbonate + CO2 users, versus CO2 only users for each selection
-# Add a title overall, a description of the interactive feature
 library(shiny)
 library(ggplot2)
 library(dplyr)
-library(modeest)
-rawdata <- read.csv("data.csv")
-rawdata$del13c <- round(rawdata$del13c, digits = 0)
-rawdata$color <- factor(ifelse(rawdata$del13c < -30, "purple", "pink"))
-yaxis <- c(70, 140, 170, 200, 215)
+library(reshape2)
+raw<-read.csv("data.csv")
+seaweed<-subset(raw, seaweed!="Seawater")
+
+dataerr<-subset(seaweed, select=c(taxa, tadiff, tase,delta.hco3.pH.calc.se,delta.co2.pH.calc.se, 
+                                  type, division, bicarb.user.text))
+percent<-subset(seaweed, select=c(taxa, hco3.percent, co2.percent))
+data<-subset(seaweed, select=c(taxa, tadiff, tase, Bicarbonate, CarbonDioxide, 
+                               type, division, bicarb.user.text))
+
+test<-melt(data, id=c("taxa", "tadiff", "tase", "type", "division", "bicarb.user.text"))
+
+error<-melt(dataerr, id=c("taxa", "tadiff", "tase", "type", "division", "bicarb.user.text"))
+code<-melt(percent, id=c("taxa"))
+
+test$error_value<-error$value
+test$percent<-code$value
+test$percent<-as.factor(test$percent)
+test$ccm <- c(rep("CCM", 48))
+test$bicarb.user.text <- paste(test$ccm, test$bicarb.user.text)
+test$bicarb.user.text <- factor(test$bicarb.user.text, levels = c("CCM Present", "CCM Absent"))
+
+cols<-c("Brown"="saddlebrown", "Green"="#339900", "Red"="red","Red calcifying"="magenta",
+        "Surfgrass"= "black")
 
 ui <- fluidPage(
-  tags$h1("Seaweed State of the Union"),
+  tags$h1("Seaweeds Boost Their Own Food Source"),
   tags$h2("About this demo"),
   tags$h3("What is it?"),
   tags$p(style = "font-size:13.5pt", "Hello Seaweed True Believers! I'm Courtney Stepien, and this project is an R Shiny interactive graph for a figure from my paper.
-         This demo shows how seaweeds and other marine plants like surfgrasses use carbon in the oceans.
-         It's a histogram - a count of how many seaweeds have a certain value - in this case, how many seaweed
-         and surfgrass species have a certain tissue carbon isotope value, which tells us whether or not they
-         can access bicarbonate for photosynthesis (see more below)."),
+         This demo shows how seaweeds and other marine plants like surfgrasses change seawater chemistry to their advantage.
+         By changing the alkalinity of the water around them, seaweeds increase the amount of carbon available to them 
+         for photosynthesis (more explanation below)"),
   tags$h3("What are the controls?"),
-  tags$p(style = "font-size:13.5pt", "You can choose which seaweed Phyla to show data for (and the 1 surfgrass Phylum too). Also, 
-         you can change the size of the bins. The output next to the histogram will show you the maximum, minimum
-         and mode isotope value for your selection."),
-  tags$h2("Discover Which Marine Plants use Bicarbonate, and Which are Stuck on the CO2-only Diet"),
+  tags$p(style = "font-size:13.5pt", "You can choose which seaweed Phyla to show data for (and the 1 surfgrass Phylum too), 
+         whether the seaweeds you want to view can use bicarbonate and carbon dioxide, or only carbon dioxide, and 
+         the response variable - bicarbonate or carbon dioxide."),
+  tags$h2("See How Much Carbon Seaweeds Gain by Changing the Seawater Chemistry Around Them"),
   tags$br(),
   fluidRow(
     column(3, checkboxGroupInput(inputId = "taxa", label = "Select Taxa to Display", 
@@ -30,15 +46,12 @@ ui <- fluidPage(
                        "Brown Seaweeds (Ochrophyta)" = "Ochrophyta", "Surfgrasses (Tracheophyta)" = "Tracheophyta"),
                      selected = c("Chlorophyta", "Rhodophyta", 
                                   "Ochrophyta", "Tracheophyta")),
-           selectInput(inputId = "binwidth", 
-                       label = "Bin width (isotope units)", 
-                       choices = c(1, 2, 3, 4, 5), 
-                       selected = 1,
-                       width = '70px'), 
-           verbatimTextOutput(outputId = "max"),
-           verbatimTextOutput(outputId = "min"),
-           verbatimTextOutput(outputId = "mo")), 
-    column(9, align = "left", plotOutput(outputId = "hist"))),
+           selectInput(inputId = "CCM", 
+                       label = "Select seaweeds that can use...", 
+                       choices = c("Carbon dioxide only", "Carbon dioxide and bicarbonate", "Select everyone"), 
+                       selected = "Select everyone")), 
+    column(9, plotOutput(outputId = "plot"))
+  ),
   tags$hr(),
   tags$h2("The Science of Seaweeds"),
   fluidRow(
@@ -47,19 +60,21 @@ ui <- fluidPage(
            This is a good question! When a lot of people think about climate change, 
            we hear a lot about CO2 in the atmosphere, global warming, but the flip side of this is 
            that the oceans act as big sponges, big sinks that just suck up all that extra carbon dioxide, 
-           and that's actually changing the ocean chemistry – how much carbon is available to seaweeds, 
-           what type of carbon is available to them, and these can have some implications for ocean 
-           communities and ecosystems down the line."), 
+           and that's actually changing the ocean chemistry. We've got a decent handle on the chemistry of 
+           what's happening, but we know less about how plants and animals are feeding back into 
+           the global carbon cycle."), 
            tags$h3("Some Quick Ocean Chemistry"),
            tags$p(style = "font-size:13.5pt", "In our gardens and parks, plants photosynthesize and use carbon dioxide, super easy, no big deal.
             In the oceans though, carbon dioxide is actually rare - less than 1% of all the dissolved inorganic
             carbon in water! So lots of seaweeds have swtiched over to using not only that rare carbon dioxide,
             but also the super-abundant bicarbonate. It's a little more costly energy-wise to use bicarbonate, 
-            so no all seaweeds have adopted this new lifestyle.")),
+            so no all seaweeds have adopted this new lifestyle. We found that to help locally boost how much
+            carbon dioxide and bicarbonate is in the water, seaweeds have actually managed to tweak the
+            local seawater chemistry in a way that favors their favorite carbon resources.")),
     column(5, tags$img(height = 405, 
            width = 540,
-           src = "seaweed.jpg"), 
-           tags$p("Taken by Orissa Moulton"))),
+           src = "garage_science.JPG"), 
+           tags$p("Garage science - how we did this experiment"))),
   tags$h3("You Are What You Eat"),
   tags$p(style = "font-size:13.5pt", "Now, in order to tease out which seaweeds are using carbon dioxide only, 
          and which seaweeds can also use bicarbonate, all we have to do is look at
@@ -84,33 +99,29 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
-  data <- reactive({filter(rawdata, division %in% input$taxa)})
+  data <- reactive({filter(test, division %in% input$taxa)})
   bin <- reactive({as.numeric(input$binwidth)})
   lim <- reactive({yaxis[as.numeric(input$binwidth)]})
-  output$hist <- renderPlot({
-    ggplot(data(), aes(x = del13c, fill = color, color = "black")) + xlim(-45,0) + ylim(0,lim()) +
-      geom_histogram(binwidth = bin(), color = "black") +
-      #geom_histogram(data = filter(data(), del13c >= -30), binwidth = bin(), fill = "pink", color = "black") +
-      scale_fill_manual(drop = FALSE, name = "Legend", values = c("purple" = "purple", "pink" = "pink"), 
-                        labels = c("Bicarbonate User", "CO2 Only")) +
-      geom_vline(xintercept = -30, linetype = "dotted", size = 1) +
-      xlab(expression(paste("\nMean species ", delta^{13}, "C ", "(\u2030)"))) +
-      ylab("Species Count") +
-      theme(panel.grid.major.y = element_line(color = "gray"), 
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            axis.text.x = element_text(size=20, color = "black"), 
-            axis.text.y = element_text(size=20, color = "black"),
-            axis.title.x = element_text(size=20), 
-            axis.title.y = element_text(size=20), 
-            legend.text = element_text(size = 15), 
-            legend.title = element_text(size = 15),
-            legend.position = c(0.9,0.7))
+  output$plot <- renderPlot({
+    ggplot(data(), aes(x=tadiff, y=value, color=type)) + geom_point() +
+      geom_vline(xintercept = 0, linetype = "solid", color = "gray18") +
+      geom_hline(yintercept=0, linetype="solid", color = "gray18") +
+      geom_errorbar(size = 1, data = data(), aes(x = tadiff, y = value, ymin = value - error_value, ymax = value + error_value), colour = 'black') +
+      geom_errorbarh(size = 1, data = data(), aes(x = tadiff, y = value, xmin = tadiff - tase, xmax = tadiff + tase), colour= "black") +
+      geom_point(size = 5) +
+      #facet_grid(variable~bicarb.user.text, scales="free_y") +
+      scale_color_manual(values=cols, 
+                         labels=c("Browns", "Greens", "Reds", "Calcifying Reds", 
+                                               "Surfgrass"), 
+                         breaks = c("Green", "Brown", "Red", "Red calcifying", "Surfgrass"), name="Seaweed") +
+      ylab("Carbon gained\n(μmol/kg seawater)") +
+      xlab("\nSeaweed-induced change\nin water alkalinity (μmol/kg seawater)") +
+      theme(legend.key = element_blank(), 
+            strip.text.x = element_text(size=18), strip.text.y = element_text(size=18), 
+            axis.title.x = element_text(size=18), axis.title.y = element_text(size=18), 
+            axis.text.x = element_text(size=18), axis.text.y = element_text(size=18), 
+            legend.text = element_text(size=18), legend.title = element_text(size=18))
     })
-  output$max <- renderText({paste("Max species ", "\u03B413C", "(\u2030) =", max(data()$del13c))})
-  output$min <- renderText({paste("Min species ", "\u03B413C", "(\u2030) =", min(data()$del13c))})
-  output$mo <- renderText({paste("Mode ", "\u03B413C", "(\u2030) =", 
-                                 paste(mfv(data()$del13c), collapse = ", "))})
 }
 
 shinyApp(ui = ui, server = server)
