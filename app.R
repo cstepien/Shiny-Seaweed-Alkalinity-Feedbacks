@@ -78,13 +78,15 @@ ui <- fluidPage(
            tags$p("Garage science - how we did this experiment"))),
   tags$hr(),
   tags$h2("Learn more about the project"),
+  tags$p(style = "font-size:13.5pt", "See the code for this Shiny app", 
+         tags$a(href = "https://github.com/cstepien/Shiny-Seaweed-Alkalinity-Feedbacks", "on GitHub.")),
   tags$p(style = "font-size:13.5pt", "The full text of the original paper can be found", tags$a(href = "http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0159062", "here"), 
          "CC Stepien, CA Pfister, JT Wootton. Functional Traits for Carbon Access in Macrophytes (2016) PloS one 11 (7), e0159062."),
   tags$p(style = "font-size:13.5pt", "And Kevin Jiang wrote a cool general article about the project and my
          bootleg garage science", 
          tags$a(href = "https://issuu.com/medicineonthemidway/docs/medicineonthemidway-fall2015", 
                 "over on pages 24-25 of UChicago's Medicine on the Midway")),
-  tags$p(style = "font-size:13.5pt", "You can contact me at cstepien@uchicago.edu and follow my current seaweed project on", 
+  tags$p(style = "font-size:13.5pt", "You can contact me at", strong("cstepien@uchicago.edu"), "and follow my current seaweed project on", 
          tags$a(href = "https://github.com/cstepien/Evolution-of-CCMs", "GitHub"))
   )
 
