@@ -2,9 +2,7 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(reshape2)
-raw<-read.csv("data.csv")
-seaweed<-subset(raw, seaweed!="Seawater")
-
+seaweed<-read.csv("data.csv")
 dataerr<-subset(seaweed, select=c(taxa, tadiff, tase,delta.hco3.pH.calc.se,delta.co2.pH.calc.se, 
                                   type, division, bicarb.user.text))
 percent<-subset(seaweed, select=c(taxa, hco3.percent, co2.percent))
@@ -41,15 +39,12 @@ ui <- fluidPage(
   tags$h2("See How Much Carbon Seaweeds Gain by Changing the Seawater Chemistry Around Them"),
   tags$br(),
   fluidRow(
-    column(3, checkboxGroupInput(inputId = "taxa", label = "Select Taxa to Display", 
-                     c("Green Seaweeds (Chlorophyta)" = "Chlorophyta", "Red Seaweeds (Rhodophyta)" = "Rhodophyta", 
+    column(3, selectInput(inputId = "taxa", label = "Select Taxa to Display", choices =
+                     c("Green Seaweeds (Chlorophyta)" = "Chlorophyta", "Red Seaweeds (Rhodophyta)" = "Rhodophyta",
                        "Brown Seaweeds (Ochrophyta)" = "Ochrophyta", "Surfgrasses (Tracheophyta)" = "Tracheophyta"),
-                     selected = c("Chlorophyta", "Rhodophyta", 
-                                  "Ochrophyta", "Tracheophyta")),
-           selectInput(inputId = "CCM", 
-                       label = "Select seaweeds that can use...", 
-                       choices = c("Carbon dioxide only", "Carbon dioxide and bicarbonate", "Select everyone"), 
-                       selected = "Select everyone")), 
+                     selected = c("Chlorophyta", "Rhodophyta", "Ochrophyta", "Tracheophyta"))),
+           radioButtons(inputId = "carbon", "Which carbon compound to measure response?", 
+                        choices = c("Carbon dioxide", "Bicarbonate")),
     column(9, plotOutput(outputId = "plot"))
   ),
   tags$hr(),
@@ -96,22 +91,26 @@ ui <- fluidPage(
                 "over at UChicago Science Life")),
   tags$p(style = "font-size:13.5pt", "You can contact me at cstepien@uchicago.edu and follow my current seaweed project on", 
          tags$a(href = "https://github.com/cstepien/Evolution-of-CCMs", "GitHub"))
-)
+  )
+
+# How to incorporate sizing column based on whether a box is checked or not..hmm (conditional panel?)
+# Plot empty null graph
+# Add CCM users or not as second category in determining reactive data value (just filter by this input too)
 
 server <- function(input, output) {
   data <- reactive({filter(test, division %in% input$taxa)})
-  bin <- reactive({as.numeric(input$binwidth)})
-  lim <- reactive({yaxis[as.numeric(input$binwidth)]})
+  
   output$plot <- renderPlot({
-    ggplot(data(), aes(x=tadiff, y=value, color=type)) + geom_point() +
+      ggplot(data(), aes(x=tadiff, y=value, color=type)) + geom_point() +
+      ylim(-200, 400) + xlim(-1400, 400) +
       geom_vline(xintercept = 0, linetype = "solid", color = "gray18") +
       geom_hline(yintercept=0, linetype="solid", color = "gray18") +
       geom_errorbar(size = 1, data = data(), aes(x = tadiff, y = value, ymin = value - error_value, ymax = value + error_value), colour = 'black') +
       geom_errorbarh(size = 1, data = data(), aes(x = tadiff, y = value, xmin = tadiff - tase, xmax = tadiff + tase), colour= "black") +
       geom_point(size = 5) +
       #facet_grid(variable~bicarb.user.text, scales="free_y") +
-      scale_color_manual(values=cols, 
-                         labels=c("Browns", "Greens", "Reds", "Calcifying Reds", 
+      scale_color_manual(drop = FALSE, values=cols, 
+                         labels=c("Green", "Brown", "Red", "Calcifying Red", 
                                                "Surfgrass"), 
                          breaks = c("Green", "Brown", "Red", "Red calcifying", "Surfgrass"), name="Seaweed") +
       ylab("Carbon gained\n(μmol/kg seawater)") +
@@ -121,6 +120,7 @@ server <- function(input, output) {
             axis.title.x = element_text(size=18), axis.title.y = element_text(size=18), 
             axis.text.x = element_text(size=18), axis.text.y = element_text(size=18), 
             legend.text = element_text(size=18), legend.title = element_text(size=18))
+      #scale_size_manual(values = c(3.5, 5.5, 8, 11), breaks = c("<110%", "111-300%", "301-500%", ">500%"))
     })
 }
 
