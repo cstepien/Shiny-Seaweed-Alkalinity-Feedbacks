@@ -41,6 +41,8 @@ ui <- fluidPage(
          whether the seaweeds you want to view can use bicarbonate and carbon dioxide, or only carbon dioxide, and 
          the response variable - bicarbonate or carbon dioxide."),
   tags$h2("See How Much Carbon Seaweeds Gain by Changing the Seawater Chemistry Around Them"),
+  tags$p(style = "font-size:13.5pt","Keep an eye on the scale bar for the y axis - it's two orders of magnitude different for
+          carbon dioxide versus bicarbonate!"),
   tags$br(),
   fluidRow(
     column(3, selectInput(inputId = "taxa", label = "Select Taxa to Display", choices =
@@ -56,11 +58,10 @@ ui <- fluidPage(
   tags$hr(),
   tags$h2("The Science of Seaweeds"),
   fluidRow(
-    column(7, tags$h3("Wait, Why Do We Care?"), 
-           tags$p(style = "font-size:13.5pt", "Now, before we get started, you might be wondering – why? Why do we care about this? 
-           This is a good question! When a lot of people think about climate change, 
-           we hear a lot about CO2 in the atmosphere, global warming, but the flip side of this is 
-           that the oceans act as big sponges, big sinks that just suck up all that extra carbon dioxide, 
+    column(7, tags$h3("Charismatic Seaweeds - Or, Why Care?"), 
+           tags$p(style = "font-size:13.5pt", "When a lot of people talk about climate change, 
+           we hear a lot about carbon dioxide in the atmosphere, aka global warming, but the flip side of this is 
+           that the oceans act as big sponges that suck up all that extra carbon dioxide, 
            and that's actually changing the ocean chemistry. We've got a decent handle on the chemistry of 
            what's happening, but we know less about how plants and animals are feeding back into 
            the global carbon cycle."), 
@@ -68,33 +69,21 @@ ui <- fluidPage(
            tags$p(style = "font-size:13.5pt", "In our gardens and parks, plants photosynthesize and use carbon dioxide, super easy, no big deal.
             In the oceans though, carbon dioxide is actually rare - less than 1% of all the dissolved inorganic
             carbon in water! So lots of seaweeds have swtiched over to using not only that rare carbon dioxide,
-            but also the super-abundant bicarbonate. It's a little more costly energy-wise to use bicarbonate, 
-            so no all seaweeds have adopted this new lifestyle. We found that to help locally boost how much
+            but also the super-abundant bicarbonate. We found that to help locally boost how much
             carbon dioxide and bicarbonate is in the water, seaweeds have actually managed to tweak the
             local seawater chemistry in a way that favors their favorite carbon resources.")),
     column(5, tags$img(height = 405, 
            width = 540,
            src = "garage_science.JPG"), 
            tags$p("Garage science - how we did this experiment"))),
-  tags$h3("You Are What You Eat"),
-  tags$p(style = "font-size:13.5pt", "Now, in order to tease out which seaweeds are using carbon dioxide only, 
-         and which seaweeds can also use bicarbonate, all we have to do is look at
-         the seaweed plant tissue - because it turns out, you are what you photosynthesize if you're
-         a seaweed! Seaweeds that use ONLY carbon dioxide have very low (very negative) carbon isotope signatures (less than -30 units!),
-         while seaweeds that use bicarbonate in addition to carbon dioxide have really high (less negative) carbon
-         isotope signatures (greater than -30 units!). This has to do with the original isotope signatures
-         of the carbon dioxide vs the bicarbonate - if you eat 'heavier' bicarbonate food as a seaweed, 
-         you get a more positive isotope ratio. Seaweeds on the CO2 only diet, a much isotopically 'lighter'
-         food, end up with more negative values. It turns out that most seaweeds are not on a diet. "),
   tags$hr(),
   tags$h2("Learn more about the project"),
-  tags$p(style = "font-size:13.5pt", "The original paper can be found", tags$a(href = "http://onlinelibrary.wiley.com/doi/10.1111/1365-2745.12451/full", "here"), 
-         "Impacts of geography, taxonomy and functional group on inorganic carbon use 
-         patterns in marine macrophytes (2015) Journal of Ecology 103 (6), 1372-1383."),
-  tags$p(style = "font-size:13.5pt", "I made a podcast with slides describing the project", tags$a(href = "https://www.youtube.com/watch?v=5PULuVG0694", "on YouTube here")),
-  tags$p(style = "font-size:13.5pt", "And Hannah Brechka wrote a cool general article about the project", 
-         tags$a(href = "https://sciencelife.uchospitals.edu/2015/10/21/seaweed-state-of-the-union/", 
-                "over at UChicago Science Life")),
+  tags$p(style = "font-size:13.5pt", "The full text of the original paper can be found", tags$a(href = "http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0159062", "here"), 
+         "CC Stepien, CA Pfister, JT Wootton. Functional Traits for Carbon Access in Macrophytes (2016) PloS one 11 (7), e0159062."),
+  tags$p(style = "font-size:13.5pt", "And Kevin Jiang wrote a cool general article about the project and my
+         bootleg garage science", 
+         tags$a(href = "https://issuu.com/medicineonthemidway/docs/medicineonthemidway-fall2015", 
+                "over on pages 24-25 of UChicago's Medicine on the Midway")),
   tags$p(style = "font-size:13.5pt", "You can contact me at cstepien@uchicago.edu and follow my current seaweed project on", 
          tags$a(href = "https://github.com/cstepien/Evolution-of-CCMs", "GitHub"))
   )
@@ -109,7 +98,7 @@ server <- function(input, output) {
   minlim <- reactive({as.numeric(yminlim[input$carbon])})
   output$plot <- renderPlot({
       ggplot(data(), aes(x=tadiff, y=value, color=type)) + geom_point() +
-      ylim(minlim(), maxlim()) + xlim(-1400, 400) +
+      ylim(minlim(), maxlim()) + xlim(-1400, 400) + #coord_fixed(150) +
       geom_vline(xintercept = 0, linetype = "solid", color = "gray18") +
       geom_hline(yintercept=0, linetype="solid", color = "gray18") +
       geom_errorbar(size = 1, data = data(), aes(x = tadiff, y = value, ymin = value - error_value, ymax = value + error_value), colour = 'black') +

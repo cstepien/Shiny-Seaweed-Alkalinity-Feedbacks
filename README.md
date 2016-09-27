@@ -5,7 +5,7 @@
 This project is an R Shiny interactive graph for Figure 4 "Carbon gained through TA shifts" from Functional Traits for Carbon Access in Macrophytes, CC Stepien, CA Pfister, JT Wootton PloS one 11 (7), e0159062
 Full-text paper can be found [here](http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0159062).
 
-The current form of the interactive graph is under construction!
+The current form of the interactive graph is published on [my Shinyapps.io profile](https://courtneystepien.shinyapps.io/Alkalinity/).
 
 ## License
 
