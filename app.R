@@ -23,6 +23,10 @@ test$bicarb.user.text <- factor(test$bicarb.user.text, levels = c("CCM Present",
 
 cols<-c("Brown"="saddlebrown", "Green"="#339900", "Red"="red","Red calcifying"="magenta",
         "Surfgrass"= "black")
+ 
+ymaxlim <- list("CarbonDioxide" = 5.0, "Bicarbonate" = 400)
+yminlim <- list("CarbonDioxide" = -4.0, "Bicarbonate" = -200)
+
 
 ui <- fluidPage(
   tags$h1("Seaweeds Boost Their Own Food Source"),
@@ -42,9 +46,11 @@ ui <- fluidPage(
     column(3, selectInput(inputId = "taxa", label = "Select Taxa to Display", choices =
                      c("Green Seaweeds (Chlorophyta)" = "Chlorophyta", "Red Seaweeds (Rhodophyta)" = "Rhodophyta",
                        "Brown Seaweeds (Ochrophyta)" = "Ochrophyta", "Surfgrasses (Tracheophyta)" = "Tracheophyta"),
-                     selected = c("Chlorophyta", "Rhodophyta", "Ochrophyta", "Tracheophyta"))),
+                     selected = "Chlorophyta",
+                     width = '190px'),
            radioButtons(inputId = "carbon", "Which carbon compound to measure response?", 
-                        choices = c("Carbon dioxide", "Bicarbonate")),
+                        choices = c("Carbon dioxide" = "CarbonDioxide", "Bicarbonate" = "Bicarbonate"), 
+                        width = '190px')),
     column(9, plotOutput(outputId = "plot"))
   ),
   tags$hr(),
@@ -98,11 +104,12 @@ ui <- fluidPage(
 # Add CCM users or not as second category in determining reactive data value (just filter by this input too)
 
 server <- function(input, output) {
-  data <- reactive({filter(test, division %in% input$taxa)})
-  
+  data <- reactive({filter(test, division %in% input$taxa, variable == input$carbon)})
+  maxlim <- reactive({as.numeric(ymaxlim[input$carbon])})
+  minlim <- reactive({as.numeric(yminlim[input$carbon])})
   output$plot <- renderPlot({
       ggplot(data(), aes(x=tadiff, y=value, color=type)) + geom_point() +
-      ylim(-200, 400) + xlim(-1400, 400) +
+      ylim(minlim(), maxlim()) + xlim(-1400, 400) +
       geom_vline(xintercept = 0, linetype = "solid", color = "gray18") +
       geom_hline(yintercept=0, linetype="solid", color = "gray18") +
       geom_errorbar(size = 1, data = data(), aes(x = tadiff, y = value, ymin = value - error_value, ymax = value + error_value), colour = 'black') +
